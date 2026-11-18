@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Well Testing | Pipework & Certificate System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root { --primary: #0f4c81; --primary-dark: #093256; --bg: #f1f5f9; --card: #fff; --border: #cbd5e1; --text: #0f172a; --muted: #64748b; }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 14px; overflow-x: hidden; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .auth-box { max-width: 430px; margin: 28px auto; }
+    .header { background: linear-gradient(135deg, var(--primary-dark), #1565a8); color: #fff; padding: 16px 18px; border-radius: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(15,76,129,0.2); }
+    .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; flex-wrap: wrap; }
+    .header h1 { margin: 0; font-size: 1.12rem; line-height: 1.3; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
+    .tab-btn { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 9px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.88rem; min-height: 40px; }
+    .tab-btn.active { background: #fff; color: var(--primary); border-color: #fff; }
+    .btn-logout { background: rgba(220,38,38,0.85); border-color: transparent; margin-left: auto; }
+    .card { background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.06); margin-bottom: 14px; border: 1px solid #e2e8f0; }
+    .card h3 { margin: 0 0 10px; font-size: 1.02rem; color: var(--primary-dark); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .col { flex: 1; min-width: 170px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: var(--muted); }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 16px; background: #fff; color: var(--text); min-height: 44px; }
+    input[type="file"] { padding: 8px; font-size: 0.88rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,76,129,0.15); }
+    .btn { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; justify-content: center; min-height: 44px; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-success { background: #15803d; } .btn-danger { background: #b91c1c; } .btn-warning { background: #b45309; }
+    .btn-outline { background: #e2e8f0; color: #1e293b; }
+    .btn-sm { padding: 6px 11px; font-size: 0.8rem; min-height: 34px; border-radius: 8px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+    .badge-valid { background: #dcfce7; color: #166534; } .badge-expiring { background: #fef9c3; color: #854d0e; } .badge-expired { background: #fee2e2; color: #991b1b; }
+    .badge-loc { background: #dbeafe; color: #1e40af; font-size: 0.88rem; padding: 5px 12px; } .badge-outline { background: #e2e8f0; color: #334155; }
+    .cert-pill { display: inline-flex; align-items: center; gap: 4px; margin: 3px 4px 3px 0; border: 1px solid rgba(0,0,0,0.08); padding: 5px 10px; }
+    .cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-top: 12px; }
+    .cert-slot { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .cert-slot-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    th { background: #f8fafc; color: var(--muted); font-weight: 700; }
+    .table-wrap { overflow-x: auto; }
+    .hidden { display: none !important; }
+    .serial-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 10px; background: #fff; }
+    .col-group { border-bottom: 1px solid var(--border); }
+    .col-group-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; background: #e2e8f0; position: sticky; top: 0; z-index: 1; flex-wrap: wrap; }
+    .col-group-label { display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: var(--primary-dark); font-weight: 700; font-size: 0.92rem; }
+    .col-group-label input[type="checkbox"], .serial-item input[type="checkbox"] { width: 20px; height: 20px; min-height: 20px; cursor: pointer; flex-shrink: 0; }
+    .serial-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px 11px 22px; border-bottom: 1px solid #f1f5f9; cursor: pointer; margin: 0; color: var(--text); font-weight: 500; font-size: 0.94rem; }
+    .alert { padding: 10px 12px; border-radius: 10px; margin-top: 8px; font-weight: 600; font-size: 0.85rem; line-height: 1.4; }
+    .alert-info { background: #e0f2fe; color: #075985; } .alert-warn { background: #fef9c3; color: #854d0e; } .alert-err { background: #fee2e2; color: #991b1b; } .alert-ok { background: #dcfce7; color: #166534; }
+    .loader { text-align: center; padding: 16px; color: var(--primary); font-weight: 700; }
+    .link-serial { color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline; }
+    .quick-btns { display: flex; gap: 8px; margin-top: 8px; } .quick-btns .btn { flex: 1; }
+    .dup-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; flex-wrap: wrap; }
+    @media (max-width: 680px) {
+      body { padding: 8px; } .auth-box { margin: 12px auto; } .header { padding: 14px; border-radius: 12px; }
+      .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .btn-logout { grid-column: 1 / -1; margin-left: 0; }
+      .card { padding: 14px; border-radius: 12px; } .row { flex-direction: column; align-items: stretch; gap: 8px; }
+      .col { min-width: 100%; } .row > div > .btn, .row > .btn { width: 100%; }
+      table.resp-table thead { display: none; }
+      table.resp-table, table.resp-table tbody, table.resp-table tr, table.resp-table td { display: block; width: 100%; }
+      table.resp-table tr { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+      table.resp-table td { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; text-align: right; }
+      table.resp-table td:last-child { border-bottom: none; padding-top: 9px; }
+      table.resp-table td::before { content: attr(data-label); font-weight: 700; color: var(--muted); font-size: 0.78rem; text-align: left; flex-shrink: 0; }
+      table.resp-table td.td-stack { flex-direction: column; align-items: flex-start; text-align: left; }
+      .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; } .actions-cell .btn { flex: 1; min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="authView" class="auth-box">
+    <div class="card">
+      <div style="text-align:center; margin-bottom:16px;">
+        <div style="font-size:2rem; margin-bottom:4px;">🛠️</div>
+        <h2 style="margin:0; color:var(--primary); font-size:1.3rem;">Well Testing System</h2>
+        <p style="margin:4px 0 0; color:var(--muted); font-size:0.85rem;">Safwan Petroleum Technologies</p>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button class="btn" id="btnShowLogin" style="flex:1;" onclick="toggleAuthMode('login')">Login</button>
+        <button class="btn btn-outline" id="btnShowReg" style="flex:1;" onclick="toggleAuthMode('register')">Create Account</button>
+      </div>
+      <div id="loginForm">
+        <label>Company Email</label><input type="email" id="loginEmail" placeholder="name@safwanpetroleum.ae" onkeydown="if(event.key==='Enter') doLogin()">
+        <label style="margin-top:10px;">Password</label><input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="btn" style="width:100%; margin-top:14px;" id="loginBtn" onclick="doLogin()">🔐 Login</button>
+        <div id="loginMsg"></div>
+      </div>
+      <div id="registerForm" class="hidden">
+        <label>Full Name *</label><input type="text" id="regName" placeholder="e.g. Mohamed Ahmed">
+        <label style="margin-top:10px;">Company Email (@safwanpetroleum.ae) *</label><input type="email" id="regEmail" placeholder="name@safwanpetroleum.ae">
+        <label style="margin-top:10px;">Password (min 6 chars) *</label><input type="password" id="regPass" placeholder="Create password">
+        <label style="margin-top:10px;">Confirm Password *</label><input type="password" id="regPass2" placeholder="Repeat password" onkeydown="if(event.key==='Enter') doRegister()">
+        <button class="btn btn-success" style="width:100%; margin-top:14px;" id="regBtn" onclick="doRegister()">📝 Request Account</button>
+        <div id="regMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="header">
+      <div class="header-top"><div><h1>🛠️ Well Testing System</h1><div id="userInfoLine" style="font-size:0.8rem; opacity:0.9; margin-top:3px;"></div></div></div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('search', this)">🔍 Search</button>
+        <button class="tab-btn hidden" id="adminTabBtn" onclick="switchTab('admin', this)">⚙️ Admin</button>
+        <button class="tab-btn hidden" id="usersTabBtn" onclick="switchTab('users', this)">👥 Users</button>
+        <button class="tab-btn" onclick="switchTab('password', this)">🔑 Password</button>
+        <button class="tab-btn btn-logout" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+
+    <div id="tab-search">
+      <div class="card">
+        <h3>🔎 Quick Search by Serial Number</h3>
+        <div class="row">
+          <div class="col"><input type="text" id="searchInput" list="serialSuggestions" placeholder="Enter Serial (e.g. SPT2024/6P3-0204)" onkeydown="if(event.key==='Enter') doSearch()"><datalist id="serialSuggestions"></datalist></div>
+          <div><button class="btn" onclick="doSearch()">🔍 Search</button></div>
+        </div>
+        <div id="searchLoader" class="loader hidden">Searching...</div><div id="searchMsg"></div>
+      </div>
+
+      <div id="searchResult" class="hidden">
+        <div class="card" id="assetCard">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div><h2 id="resSerial" style="margin:0; font-size:1.25rem;"></h2><div id="resDesc" style="margin-top:5px; font-size:0.96rem; font-weight:600; color:#475569;"></div></div>
+            <span id="resLocation" class="badge badge-loc"></span>
+          </div>
+          <div id="resDupWarn"></div>
+        </div>
+        <div class="card"><h3>📄 Active Inspection Certificates</h3><div class="table-wrap"><table class="resp-table"><thead><tr><th>Cert No.</th><th>Type</th><th>Inspector</th><th>Issue</th><th>Expiry</th><th>Status</th><th>PDF</th></tr></thead><tbody id="certTableBody"></tbody></table></div></div>
+        <div class="card" id="histCard">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleHistoryBox()"><h3 style="margin:0;">📂 History (Old Certs) <span id="histCountBadge" class="badge badge-outline"></span></h3><span id="histArrow" style="font-weight:700; color:var(--primary); font-size:0.85rem;">▼ Show</span></div>
+          <div id="histBodyWrap" class="table-wrap hidden" style="margin-top:10px;"><table class="resp-table"><thead><tr><th>Old Cert No.</th><th>Type</th><th>Inspector</th><th>Issue</th><th>Expiry</th><th>Replaced By</th><th>PDF</th></tr></thead><tbody id="histTableBody"></tbody></table></div>
+        </div>
+        <div class="card" id="movCard"><h3>🚚 Movement History</h3><div class="table-wrap"><table class="resp-table"><thead><tr><th>Date</th><th>From</th><th>To</th><th>Manifest / Notes</th></tr></thead><tbody id="movTableBody"></tbody></table></div></div>
+      </div>
+
+      <div class="card">
+        <h3>📍 Filter by Location & Equipment Type</h3>
+        <div class="row">
+          <div class="col"><label>Location (Site):</label><select id="filterLoc"></select></div>
+          <div class="col"><label>Equipment Type:</label><select id="filterDesc"></select></div>
+          <div><button class="btn" onclick="doFilterEquipment()">Filter Equipment</button></div>
+        </div>
+        <div id="filterLoader" class="loader hidden">Loading equipment...</div><div id="filterMsg"></div>
+        <div id="filterResultWrap" class="hidden" style="margin-top:14px;">
+          <div class="row" style="align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <span id="filterCountBadge" class="badge badge-loc" style="align-self:flex-start;">0 Items Found</span>
+            <div class="col" style="max-width:300px;"><input type="text" id="filterTableSearch" placeholder="Quick filter inside results..." oninput="filterResultRows()"></div>
+          </div>
+          <div class="table-wrap"><table class="resp-table"><thead><tr><th>#</th><th>Serial Number</th><th>Equipment Type</th><th>Location</th><th>Active Certificates</th></tr></thead><tbody id="filterTableBody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-admin" class="hidden">
+      <div class="card" id="dupCard">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;"><h3 style="margin:0;">⚠️ Duplicate Serials & Errors</h3><button class="btn btn-sm btn-outline" onclick="scanDuplicates()">🔄 Re-scan</button></div>
+        <div id="dupSummary" style="margin-top:8px;"></div>
+        <div id="dupTableWrap" class="table-wrap hidden"><table class="resp-table"><thead><tr><th>Serial Number</th><th>Error Type</th><th>Found In</th></tr></thead><tbody id="dupTableBody"></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;"><h3 style="margin:0;">📍 Select Location (Load-out)</h3><button class="btn btn-sm btn-warning" onclick="toggleAddAsset()">➕ Add Serials</button></div>
+        <div class="row" style="margin-top:12px;">
+          <div class="col"><label>Location:</label><select id="adminLocSelect" onchange="loadLocationSerials()"></select></div>
+          <div class="col"><label>Filter by Column:</label><select id="siteColFilter" onchange="filterSiteList()"><option value="">All Columns</option></select></div>
+          <div class="col"><label>Quick Search (Serial):</label><input type="text" id="siteFilterInput" placeholder="e.g. 6P3, 0204..." oninput="filterSiteList()"></div>
+        </div>
+        <div id="addAssetBox" class="hidden" style="background:#f8fafc; padding:14px; border-radius:10px; margin-top:12px; border:1px solid var(--border);">
+          <h4 style="margin:0 0 10px;">Add Serial(s) to Selected Location</h4>
+          <div class="row" style="align-items:flex-start;">
+            <div class="col"><label>Equipment Description (Row 1) *</label><select id="newDescSelect" onchange="toggleCustomDesc()"><option value="">-- Select Equipment Type --</option></select><input id="newDescCustom" class="hidden" style="margin-top:8px;" placeholder='Enter new Equipment Type'></div>
+            <div class="col"><label>Serial Numbers *</label><textarea id="newSerials" rows="2" placeholder="SPT2024/6P3-0204, SPT2023/6P3-0117"></textarea></div>
+          </div>
+          <button class="btn btn-success" style="margin-top:10px; width:100%;" onclick="submitNewAssets()">Save to Location Sheet</button>
+          <div id="addAssetMsg"></div>
+        </div>
+        <div id="siteLoader" class="loader hidden">Loading location equipment...</div>
+        <div id="siteSerialsWrap" class="hidden" style="margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <label style="margin:0; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text); font-size:0.9rem;"><input type="checkbox" id="selectAllBox" onchange="toggleSelectAll(this.checked)" style="width:20px; height:20px; min-height:20px;"> Select All Visible</label>
+            <span id="selectedCountBadge" class="badge badge-loc">Selected: 0</span>
+          </div>
+          <div id="serialList" class="serial-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div><h3 style="margin:0;">📤 1. Upload Certificates (MPI / UT / HT / Visual)</h3><span style="font-size:0.82rem; color:var(--muted);">Old certs of the same type move to History automatically.</span></div>
+          <button type="button" class="btn btn-sm btn-outline" onclick="clearAllSlots()">Clear All</button>
+        </div>
+        <div id="certSlotsGrid" class="cert-grid"></div>
+        <button class="btn btn-success" style="margin-top:14px; width:100%; font-size:1rem;" id="uploadBtn" onclick="submitAllCertificates()">🚀 Upload & Link Certificates</button>
+        <div id="uploadMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>🚚 2. Transfer Selected to Another Location</h3>
+        <div class="row">
+          <div class="col"><label>Destination Location:</label><select id="transferToLoc"></select></div>
+          <div class="col"><label>Delivery Note / Manifest / Remarks:</label><input id="transferNotes" placeholder="e.g. DN-550"></div>
+          <div><button class="btn" id="transferBtn" onclick="submitTransfer()">Confirm Transfer</button></div>
+        </div>
+        <div id="transferMsg"></div>
+      </div>
+    </div>
+
+    <div id="tab-users" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;"><h3 style="margin:0;">👥 User Accounts & Approvals</h3><button class="btn btn-sm btn-outline" onclick="loadUsers()">🔄 Refresh</button></div>
+        <div id="usersLoader" class="loader hidden">Loading users...</div><div id="usersMsg"></div>
+        <div class="table-wrap"><table class="resp-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="tab-password" class="hidden">
+      <div class="card" style="max-width:460px; margin:0 auto;">
+        <h3>🔑 Change My Password</h3>
+        <label>Current Password *</label><input type="password" id="cpOld" placeholder="Enter current password">
+        <label style="margin-top:10px;">New Password (min 6 chars) *</label><input type="password" id="cpNew" placeholder="Enter new password">
+        <label style="margin-top:10px;">Confirm New Password *</label><input type="password" id="cpNew2" placeholder="Repeat new password" onkeydown="if(event.key==='Enter') doChangeMyPassword()">
+        <button class="btn btn-success" style="width:100%; margin-top:14px;" id="cpBtn" onclick="doChangeMyPassword()">Update Password</button>
+        <div id="cpMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwdGhEUKhriwvH-sglwpKTXVSjBMslKh5sjlv788VZtHxu58Eeo6dSvtpHPoBxYfPFsWw/exec'; // 👈 حط هنا رابط الـ /exec بتاع Google Apps Script
+
+  let authToken = '', currentUser = null, allDescriptions = [];
+  const CERT_SLOTS = [
+    { key: 'MPI', label: '🔵 MPI Certificate', placeholder: 'e.g. JO-26-5252-MT-23' },
+    { key: 'UT', label: '🟣 UT Certificate', placeholder: 'e.g. JO-26-5252-UT-01' },
+    { key: 'HT', label: '🟠 HT (Hydro Test)', placeholder: 'e.g. 265250-HT-26-11-TRE-SV-003' },
+    { key: 'Visual', label: '🟢 Visual Inspection', placeholder: 'e.g. VIS-26-012' }
+  ];
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  async function apiCall(action, ...args) {
+    const res = await fetch(API_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, args })
+    });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); }
+    catch (e) { throw new Error('Connection error. Ensure API_URL is correct and Apps Script is deployed as: Execute as Me & Anyone.'); }
+    if (!json.rpcOk) throw new Error(json.error || 'Server error');
+    return json.result;
+  }
+
+  function escapeHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function renderUploadSlots() {
+    document.getElementById('certSlotsGrid').innerHTML = CERT_SLOTS.map(s => `
+      <div class="cert-slot">
+        <div class="cert-slot-head"><strong style="font-size:0.95rem;">${s.label}</strong><button type="button" class="btn btn-sm btn-outline" onclick="clearSlot('${s.key}')">Clear</button></div>
+        <label>PDF File (auto-reads Report No.)</label>
+        <input type="file" id="file_${s.key}" accept=".pdf,image/*" onchange="onSlotFileSelected('${s.key}')">
+        <div id="pdfMsg_${s.key}"></div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col"><label>Report / Cert No. *</label><input id="certId_${s.key}" placeholder="${s.placeholder}"></div>
+          <div class="col"><label>Inspector</label><input id="insp_${s.key}" placeholder="TRE / Velosi"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col"><label>Issue Date</label><input type="date" id="issue_${s.key}"></div>
+          <div class="col"><label>Expiry Date *</label><input type="date" id="exp_${s.key}"></div>
+        </div>
+        <div class="quick-btns">
+          <button type="button" class="btn btn-sm btn-outline" onclick="setSlotExpiry('${s.key}', 6)">+6 Months</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="setSlotExpiry('${s.key}', 12)">+12 Months</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function clearSlot(key) { ['file_', 'certId_', 'insp_', 'issue_', 'exp_'].forEach(p => document.getElementById(p + key).value = ''); document.getElementById('pdfMsg_' + key).innerHTML = ''; }
+  function clearAllSlots() { CERT_SLOTS.forEach(s => clearSlot(s.key)); }
+
+  function setSlotExpiry(key, months) {
+    const issueInput = document.getElementById('issue_' + key);
+    let baseStr = issueInput.value;
+    if (!baseStr) { baseStr = new Date().toISOString().split('T')[0]; issueInput.value = baseStr; }
+    const p = baseStr.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    d.setUTCMonth(d.getUTCMonth() + months); d.setUTCDate(d.getUTCDate() - 1);
+    document.getElementById('exp_' + key).value = d.toISOString().split('T')[0];
+  }
+
+  function toggleHistoryBox() {
+    const wrap = document.getElementById('histBodyWrap');
+    document.getElementById('histArrow').textContent = wrap.classList.toggle('hidden') ? '▼ Show' : '▲ Hide';
+  }
+
+  function handleServerError(err, msgId) {
+    if (err && err.message && err.message.indexOf('SESSION_EXPIRED') !== -1) {
+      localStorage.removeItem('wt_auth_token'); authToken = ''; currentUser = null;
+      document.getElementById('appView').classList.add('hidden');
+      document.getElementById('authView').classList.remove('hidden');
+      document.getElementById('loginMsg').innerHTML = '<div class="alert alert-warn">Session expired. Please log in again.</div>';
+      return;
+    }
+    if (msgId) document.getElementById(msgId).innerHTML = `<div class="alert alert-err">Error: ${escapeHtml(err.message)}</div>`;
+  }
+
+  window.onload = async function() {
+    renderUploadSlots();
+    const saved = localStorage.getItem('wt_auth_token');
+    if (saved) {
+      try {
+        const res = await apiCall('resumeSession', saved);
+        if (res && res.ok) { authToken = saved; enterApp(res.user); } else localStorage.removeItem('wt_auth_token');
+      } catch (e) {}
+    }
+  };
+
+  function toggleAuthMode(mode) {
+    const isLogin = mode === 'login';
+    document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+    document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+    document.getElementById('btnShowLogin').className = isLogin ? 'btn' : 'btn btn-outline';
+    document.getElementById('btnShowReg').className = !isLogin ? 'btn' : 'btn btn-outline';
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim(), password = document.getElementById('loginPass').value, msg = document.getElementById('loginMsg');
+    if (!email || !password) { msg.innerHTML = '<div class="alert alert-err">Enter email and password.</div>'; return; }
+    document.getElementById('loginBtn').disabled = true; msg.innerHTML = '<div class="alert alert-info">Checking account...</div>';
+    try {
+      const res = await apiCall('loginUser', { email, password });
+      if (!res.ok) { msg.innerHTML = `<div class="alert alert-err">${escapeHtml(res.message)}</div>`; return; }
+      authToken = res.token; localStorage.setItem('wt_auth_token', authToken);
+      msg.innerHTML = ''; document.getElementById('loginPass').value = ''; enterApp(res.user);
+    } catch (err) { msg.innerHTML = `<div class="alert alert-err">${escapeHtml(err.message)}</div>`; }
+    finally { document.getElementById('loginBtn').disabled = false; }
+  }
+
+  async function doRegister() {
+    const name = document.getElementById('regName').value.trim(), email = document.getElementById('regEmail').value.trim(), password = document.getElementById('regPass').value, pass2 = document.getElementById('regPass2').value, msg = document.getElementById('regMsg');
+    if (password !== pass2) { msg.innerHTML = '<div class="alert alert-err">Passwords do not match.</div>'; return; }
+    document.getElementById('regBtn').disabled = true; msg.innerHTML = '<div class="alert alert-info">Submitting request...</div>';
+    try {
+      const res = await apiCall('registerUser', { name, email, password });
+      if (!res.ok) { msg.innerHTML = `<div class="alert alert-err">${escapeHtml(res.message)}</div>`; return; }
+      msg.innerHTML = `<div class="alert alert-ok">✅ ${escapeHtml(res.message)}</div>`;
+      document.getElementById('regPass').value = ''; document.getElementById('regPass2').value = '';
+    } catch (err) { msg.innerHTML = `<div class="alert alert-err">${escapeHtml(err.message)}</div>`; }
+    finally { document.getElementById('regBtn').disabled = false; }
+  }
+
+  async function doChangeMyPassword() {
+    const oldPass = document.getElementById('cpOld').value, newPass = document.getElementById('cpNew').value, newPass2 = document.getElementById('cpNew2').value, msg = document.getElementById('cpMsg');
+    if (!oldPass || newPass.length < 6) { msg.innerHTML = '<div class="alert alert-err">Enter current password and new password (min 6 chars).</div>'; return; }
+    if (newPass !== newPass2) { msg.innerHTML = '<div class="alert alert-err">New passwords do not match.</div>'; return; }
+    document.getElementById('cpBtn').disabled = true; msg.innerHTML = '<div class="alert alert-info">Updating password...</div>';
+    try {
+      const res = await apiCall('changeMyPassword', authToken, oldPass, newPass);
+      if (!res.ok) { msg.innerHTML = `<div class="alert alert-err">${escapeHtml(res.message)}</div>`; return; }
+      msg.innerHTML = `<div class="alert alert-ok">✅ ${escapeHtml(res.message)}</div>`;
+      document.getElementById('cpOld').value = ''; document.getElementById('cpNew').value = ''; document.getElementById('cpNew2').value = '';
+    } catch (err) { handleServerError(err, 'cpMsg'); }
+    finally { document.getElementById('cpBtn').disabled = false; }
+  }
+
+  async function resetUserPw(email) {
+    const newPass = prompt(`Enter new password for ${email} (min 6 chars):`);
+    if (!newPass) return;
+    if (newPass.length < 6) { alert('Password must be at least 6 characters.'); return; }
+    document.getElementById('usersMsg').innerHTML = '<div class="alert alert-info">Resetting password...</div>';
+    try {
+      await apiCall('adminResetPassword', authToken, email, newPass);
+      document.getElementById('usersMsg').innerHTML = `<div class="alert alert-ok">✅ Password updated for ${escapeHtml(email)}</div>`;
+    } catch (err) { handleServerError(err, 'usersMsg'); }
+  }
+
+  async function enterApp(user) {
+    currentUser = user;
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    document.getElementById('userInfoLine').textContent = `${user.name} (${user.role})`;
+    const isAdmin = user.role === 'Admin';
+    document.getElementById('adminTabBtn').classList.toggle('hidden', !isAdmin);
+    document.getElementById('usersTabBtn').classList.toggle('hidden', !isAdmin);
+    switchTab('search', document.querySelector('.tab-btn'));
+
+    try {
+      const data = await apiCall('getInitialData', authToken);
+      document.getElementById('serialSuggestions').innerHTML = data.serials.map(s => `<option value="${escapeHtml(s)}">`).join('');
+      allDescriptions = data.descriptions || [];
+      const adminLocOpts = '<option value="">-- Select Location --</option>' + data.locations.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+      document.getElementById('adminLocSelect').innerHTML = adminLocOpts;
+      document.getElementById('transferToLoc').innerHTML = adminLocOpts;
+      document.getElementById('filterLoc').innerHTML = '<option value="">All Locations</option>' + data.locations.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+      populateAllDescriptionDropdowns();
+    } catch (err) { handleServerError(err); }
+    if (isAdmin) { loadUsers(); scanDuplicates(); }
+  }
+
+  function doLogout() {
+    apiCall('logoutUser', authToken).catch(() => {});
+    localStorage.removeItem('wt_auth_token'); authToken = ''; currentUser = null;
+    document.getElementById('appView').classList.add('hidden');
+    document.getElementById('authView').classList.remove('hidden');
+  }
+
+  async function scanDuplicates() {
+    const sum = document.getElementById('dupSummary'), wrap = document.getElementById('dupTableWrap');
+    sum.innerHTML = '<div class="alert alert-info">Scanning all locations...</div>';
+    try {
+      const dups = await apiCall('findDuplicates', authToken);
+      if (!dups || dups.length === 0) { wrap.classList.add('hidden'); sum.innerHTML = '<div class="alert alert-ok">✅ No duplicate serials found across all sites.</div>'; return; }
+      wrap.classList.remove('hidden');
+      sum.innerHTML = `<div class="alert alert-err">⚠️ Found ${dups.length} duplicate serial(s)! Remove extra entries below:</div>`;
+      document.getElementById('dupTableBody').innerHTML = dups.map(d => {
+        const typeBadge = d.errorType === 'Same Location' ? `<span class="badge badge-expiring">Same Site (x${d.count})</span>` : `<span class="badge badge-expired">Multi-Site (x${d.count})</span>`;
+        const occHtml = d.occurrences.map(o => `<div class="dup-item"><span>📍 <strong>${escapeHtml(o.location)}</strong> (${escapeHtml(o.description)}, Row ${o.row})</span>
+          <button type="button" class="btn btn-sm btn-danger" data-loc="${escapeHtml(o.location)}" data-row="${o.row}" data-col="${o.col}" data-sn="${escapeHtml(o.serial)}" onclick="removeDup(this.dataset.loc, Number(this.dataset.row), Number(this.dataset.col), this.dataset.sn)">🗑️ Remove</button></div>`).join('');
+        return `<tr><td data-label="Serial"><strong>${escapeHtml(d.serial)}</strong></td><td data-label="Error">${typeBadge}</td><td data-label="Found In" class="td-stack">${occHtml}</td></tr>`;
+      }).join('');
+    } catch (err) { handleServerError(err, 'dupSummary'); }
+  }
+
+  async function removeDup(loc, row, col, serial) {
+    if (!confirm(`Remove "${serial}" from "${loc}" (Row ${row})?`)) return;
+    document.getElementById('dupSummary').innerHTML = '<div class="alert alert-info">Removing duplicate...</div>';
+    try {
+      await apiCall('removeDuplicateOccurrence', authToken, { location: loc, row, col, serial });
+      scanDuplicates();
+      if (document.getElementById('adminLocSelect').value === loc) loadLocationSerials();
+    } catch (err) { handleServerError(err, 'dupSummary'); }
+  }
+
+  async function loadUsers() {
+    document.getElementById('usersLoader').classList.remove('hidden');
+    try {
+      const users = await apiCall('getUsersList', authToken);
+      const pendingCount = users.filter(u => u.status === 'Pending').length;
+      document.getElementById('usersTabBtn').textContent = pendingCount > 0 ? `👥 Users (${pendingCount})` : '👥 Users';
+      document.getElementById('usersTableBody').innerHTML = users.map(u => {
+        const badgeCls = u.status === 'Approved' ? 'badge-valid' : u.status === 'Pending' ? 'badge-expiring' : 'badge-expired';
+        const emailEsc = escapeHtml(u.email);
+        let actions = '';
+        if (u.status === 'Pending') {
+          actions = `<button class="btn btn-sm btn-success" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Approved','Engineer')">✅ Engineer</button>
+                     <button class="btn btn-sm" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Approved','Admin')">⭐ Admin</button>
+                     <button class="btn btn-sm btn-danger" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Rejected','Engineer')">❌ Reject</button>`;
+        } else if (u.status === 'Approved') {
+          const toggleRole = u.role === 'Admin' ? 'Engineer' : 'Admin';
+          actions = `<button class="btn btn-sm btn-outline" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Approved','${toggleRole}')">Make ${toggleRole}</button>
+                     <button class="btn btn-sm btn-warning" data-e="${emailEsc}" onclick="resetUserPw(this.dataset.e)">🔑 Reset PW</button>
+                     <button class="btn btn-sm btn-danger" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Rejected','${escapeHtml(u.role)}')">Disable</button>`;
+        } else {
+          actions = `<button class="btn btn-sm btn-success" data-e="${emailEsc}" onclick="changeUser(this.dataset.e,'Approved','Engineer')">Re-Approve</button>
+                     <button class="btn btn-sm btn-warning" data-e="${emailEsc}" onclick="resetUserPw(this.dataset.e)">🔑 Reset PW</button>`;
+        }
+        return `<tr><td data-label="Name"><strong>${escapeHtml(u.name)}</strong></td><td data-label="Email">${emailEsc}</td><td data-label="Role">${escapeHtml(u.role)}</td><td data-label="Status"><span class="badge ${badgeCls}">${escapeHtml(u.status)}</span></td><td data-label="Date">${escapeHtml(u.createdAt)}</td><td data-label="Actions" class="td-stack"><div class="actions-cell">${actions}</div></td></tr>`;
+      }).join('');
+    } catch (err) { handleServerError(err, 'usersMsg'); }
+    finally { document.getElementById('usersLoader').classList.add('hidden'); }
+  }
+
+  async function changeUser(email, status, role) {
+    document.getElementById('usersMsg').innerHTML = '<div class="alert alert-info">Updating user...</div>';
+    try {
+      await apiCall('updateUserStatus', authToken, email, status, role);
+      document.getElementById('usersMsg').innerHTML = `<div class="alert alert-ok">✅ Updated ${escapeHtml(email)} (${status} / ${role})</div>`;
+      loadUsers();
+    } catch (err) { handleServerError(err, 'usersMsg'); }
+  }
+
+  function populateAllDescriptionDropdowns() {
+    const descOptions = allDescriptions.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    document.getElementById('filterDesc').innerHTML = '<option value="">All Equipment Types</option>' + descOptions;
+    document.getElementById('newDescSelect').innerHTML = '<option value="">-- Select Equipment Type --</option>' + descOptions + '<option value="__NEW__">➕ Add New Equipment Type...</option>';
+  }
+
+  function toggleCustomDesc() {
+    const sel = document.getElementById('newDescSelect').value, customInput = document.getElementById('newDescCustom');
+    customInput.classList.toggle('hidden', sel !== '__NEW__');
+    if (sel === '__NEW__') customInput.focus();
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    ['search', 'admin', 'users', 'password'].forEach(t => document.getElementById('tab-' + t).classList.toggle('hidden', tab !== t));
+  }
+
+  async function onSlotFileSelected(key) {
+    const file = document.getElementById('file_' + key).files[0], statusBox = document.getElementById('pdfMsg_' + key);
+    if (!file) { statusBox.innerHTML = ''; return; }
+    statusBox.innerHTML = '<div class="alert alert-info">🔍 Reading PDF...</div>';
+    try {
+      let extractedText = '';
+      if ((file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && window.pdfjsLib) {
+        const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), disableWorker: true }).promise;
+        for (let p = 1; p <= Math.min(pdf.numPages, 2); p++) {
+          const content = await (await pdf.getPage(p)).getTextContent();
+          extractedText += content.items.map(it => it.str).join(' ') + '\n';
+        }
+      }
+      if (extractedText.replace(/\s+/g, '').length >= 20) { applyExtractedSlotData(key, extractedText); return; }
+      statusBox.innerHTML = '<div class="alert alert-info">🔍 Scanned file — running OCR...</div>';
+      const base64Data = await readFileAsBase64(file);
+      const res = await apiCall('extractTextWithDriveOCR', authToken, { fileName: file.name, mimeType: file.type, base64Data });
+      if (res && res.ok && res.text) applyExtractedSlotData(key, res.text);
+      else statusBox.innerHTML = '<div class="alert alert-warn">⚠️ Scanned file — enter Report No. manually.</div>';
+    } catch (err) { statusBox.innerHTML = '<div class="alert alert-warn">⚠️ Could not auto-read PDF — enter Report No. manually.</div>'; }
+  }
+
+  function parseFlexibleDate(snippet) {
+    if (!snippet) return '';
+    const months = { JAN:'01', FEB:'02', MAR:'03', APR:'04', MAY:'05', JUN:'06', JUL:'07', AUG:'08', SEP:'09', OCT:'10', NOV:'11', DEC:'12' };
+    const m1 = snippet.match(/(\d{1,2})\s*[-\/\s]\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*[-\/\s,]\s*(\d{4})/i);
+    if (m1) return `${m1[3]}-${months[m1[2].slice(0, 3).toUpperCase()]}-${m1[1].padStart(2, '0')}`;
+    const m2 = snippet.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{4})/);
+    if (m2) { const dd = parseInt(m2[1], 10), mm = parseInt(m2[2], 10); if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) return `${m2[3]}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`; }
+    const m3 = snippet.match(/(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/);
+    return m3 ? `${m3[1]}-${m3[2].padStart(2, '0')}-${m3[3].padStart(2, '0')}` : '';
+  }
+
+  function applyExtractedSlotData(key, rawText) {
+    const text = rawText.replace(/\s+/g, ' ').trim(), statusBox = document.getElementById('pdfMsg_' + key);
+    let certId = '';
+    const rptMatch = text.match(/Report\s*(?:No\.?|Number|#)\s*[:.]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/i);
+    if (rptMatch && /\d/.test(rptMatch[1])) certId = rptMatch[1].replace(/[.,;:]+$/, '');
+    else {
+      const cleaned = text.replace(/PRESSURE\s+GAUGE[\s\S]{0,250}/i, '').replace(/SERIAL\s+NO\.?[\s\S]{0,120}/i, '');
+      const certMatch = cleaned.match(/(?:Certificate|Cert\.?|Ref\.?)\s*(?:No\.?|Number|#)\s*[:.]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/i);
+      if (certMatch && /\d/.test(certMatch[1])) certId = certMatch[1].replace(/[.,;:]+$/, '');
+    }
+    if (certId) document.getElementById('certId_' + key).value = certId;
+    if (/TRE\s+Energies/i.test(text)) document.getElementById('insp_' + key).value = 'TRE Energies';
+    else if (/TECHNICAL\s+ROYAL\s+EXCELLENCE|\bTRE\b/i.test(text)) document.getElementById('insp_' + key).value = 'TRE';
+    else if (/VELOSI/i.test(text)) document.getElementById('insp_' + key).value = 'Velosi';
+    else if (/BUREAU\s+VERITAS/i.test(text)) document.getElementById('insp_' + key).value = 'Bureau Veritas';
+    else if (/\bSGS\b/i.test(text)) document.getElementById('insp_' + key).value = 'SGS';
+
+    const dateLabels = [/Date\s+of\s+Examination\s*[:.]?\s*([^\n]{6,30})/i, /Date\s+of\s+Inspection\s*[:.]?\s*([^\n]{6,30})/i, /Inspection\s+Date\s*[:.]?\s*([^\n]{6,30})/i, /Report\s+Issue\s+Date\s*[:.]?\s*([^\n]{6,30})/i];
+    let parsedIssue = '';
+    for (const rx of dateLabels) { const m = text.match(rx); if (m) { parsedIssue = parseFlexibleDate(m[1]); if (parsedIssue) break; } }
+    if (parsedIssue) {
+      document.getElementById('issue_' + key).value = parsedIssue;
+      if (/VALID\s+UP\s+TO\s+(?:A\s+MAXIMUM\s+OF\s+)?12\s+MONTHS/i.test(text)) setSlotExpiry(key, 12);
+      else if (/VALID\s+UP\s+TO\s+(?:A\s+MAXIMUM\s+OF\s+)?6\s+MONTHS/i.test(text)) setSlotExpiry(key, 6);
+    }
+    statusBox.innerHTML = certId ? `<div class="alert alert-ok">✅ Detected: <strong>${escapeHtml(certId)}</strong></div>` : '<div class="alert alert-warn">⚠️ Report No. not found — enter manually.</div>';
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = e => resolve(e.target.result.split(',')[1]); r.onerror = () => reject(new Error('Failed to read ' + file.name)); r.readAsDataURL(file); });
+  }
+
+  async function submitAllCertificates() {
+    const serials = getSelectedSerials(), msg = document.getElementById('uploadMsg');
+    if (serials.length === 0) { msg.innerHTML = '<div class="alert alert-err">Please select at least one serial number first.</div>'; return; }
+    const tasks = [];
+    for (const s of CERT_SLOTS) {
+      const file = document.getElementById('file_' + s.key).files[0];
+      if (!file) continue;
+      const certId = document.getElementById('certId_' + s.key).value.trim(), expiryDate = document.getElementById('exp_' + s.key).value;
+      if (!certId || !expiryDate) { msg.innerHTML = `<div class="alert alert-err">Slot <strong>${s.key}</strong>: Enter Report/Cert No. and Expiry Date.</div>`; return; }
+      tasks.push({ key: s.key, certId, type: s.key, inspector: document.getElementById('insp_' + s.key).value.trim(), issueDate: document.getElementById('issue_' + s.key).value, expiryDate, file });
+    }
+    if (tasks.length === 0) { msg.innerHTML = '<div class="alert alert-err">Choose at least one PDF file in MPI, UT, HT, or Visual.</div>'; return; }
+
+    const btn = document.getElementById('uploadBtn'); btn.disabled = true;
+    let uploadedCount = 0;
+    try {
+      for (let i = 0; i < tasks.length; i++) {
+        const t = tasks[i];
+        msg.innerHTML = `<div class="alert alert-info">⏳ Uploading ${i + 1} of ${tasks.length} (${t.key}: ${escapeHtml(t.certId)})...</div>`;
+        const base64Data = await readFileAsBase64(t.file);
+        await apiCall('uploadCertificate', authToken, { certId: t.certId, type: t.type, inspector: t.inspector, issueDate: t.issueDate, expiryDate: t.expiryDate, fileName: t.certId + '_' + t.file.name, mimeType: t.file.type, base64Data, serials });
+        clearSlot(t.key); uploadedCount++;
+      }
+      msg.innerHTML = `<div class="alert alert-ok">✅ Uploaded & linked ${uploadedCount} certificate(s) to ${serials.length} serial(s)! Old certs moved to History.</div>`;
+      toggleSelectAll(false); document.getElementById('selectAllBox').checked = false;
+    } catch (err) { handleServerError(err, 'uploadMsg'); }
+    finally { btn.disabled = false; }
+  }
+
+  function viewSerialDetails(serial) { document.getElementById('searchInput').value = serial; doSearch(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+  async function doSearch() {
+    const val = document.getElementById('searchInput').value.trim();
+    if (!val) return;
+    document.getElementById('searchLoader').classList.remove('hidden');
+    document.getElementById('searchResult').classList.add('hidden');
+    document.getElementById('searchMsg').innerHTML = '';
+    try {
+      const res = await apiCall('searchSerial', authToken, val);
+      if (!res.found) { document.getElementById('searchMsg').innerHTML = '<div class="alert alert-err">Serial number not found in any location.</div>'; return; }
+      document.getElementById('searchResult').classList.remove('hidden');
+      if (res.asset) {
+        document.getElementById('assetCard').classList.remove('hidden');
+        document.getElementById('resSerial').textContent = res.asset.serial;
+        document.getElementById('resDesc').textContent = '📦 ' + res.asset.description;
+        document.getElementById('resLocation').textContent = '📍 ' + res.asset.location;
+        document.getElementById('resDupWarn').innerHTML = (res.duplicatePlaces && res.duplicatePlaces.length > 1)
+          ? '<div class="alert alert-warn" style="margin-top:10px;">⚠️ <strong>Duplicate Alert:</strong> Found in multiple places: ' + res.duplicatePlaces.map(p => `${escapeHtml(p.location)} (${escapeHtml(p.description)})`).join(' | ') + '</div>' : '';
+      } else document.getElementById('assetCard').classList.add('hidden');
+
+      document.getElementById('certTableBody').innerHTML = res.certificates.length === 0 ? '<tr><td colspan="7" style="text-align:center;color:#64748b;">No active certificates found</td></tr>' : res.certificates.map(c => {
+        const badge = c.status === 'expired' ? '<span class="badge badge-expired">🔴 Expired</span>' : c.status === 'expiring' ? '<span class="badge badge-expiring">🟡 Expiring</span>' : '<span class="badge badge-valid">🟢 Valid</span>';
+        const btn = c.pdfLink ? `<a href="${escapeHtml(c.pdfLink)}" target="_blank" class="btn btn-sm">📥 Open PDF</a>` : '-';
+        return `<tr><td data-label="Cert No."><strong>${escapeHtml(c.certId)}</strong></td><td data-label="Type">${escapeHtml(c.type)}</td><td data-label="Inspector">${escapeHtml(c.inspector)}</td><td data-label="Issue">${escapeHtml(c.issueDate)}</td><td data-label="Expiry">${escapeHtml(c.expiryDate)}</td><td data-label="Status">${badge}</td><td data-label="File">${btn}</td></tr>`;
+      }).join('');
+
+      const histList = res.historyCerts || [];
+      document.getElementById('histCard').classList.toggle('hidden', histList.length === 0);
+      document.getElementById('histBodyWrap').classList.add('hidden');
+      document.getElementById('histArrow').textContent = '▼ Show';
+      document.getElementById('histCountBadge').textContent = histList.length;
+      document.getElementById('histTableBody').innerHTML = histList.map(h => {
+        const btn = h.pdfLink ? `<a href="${escapeHtml(h.pdfLink)}" target="_blank" class="btn btn-sm btn-outline">📥 Old PDF</a>` : '-';
+        return `<tr><td data-label="Old Cert"><strong>${escapeHtml(h.certId)}</strong></td><td data-label="Type">${escapeHtml(h.type)}</td><td data-label="Inspector">${escapeHtml(h.inspector)}</td><td data-label="Issue">${escapeHtml(h.issueDate)}</td><td data-label="Expiry">${escapeHtml(h.expiryDate)}</td><td data-label="Replaced By"><span class="badge badge-outline">${escapeHtml(h.replacedBy || '-')}</span></td><td data-label="File">${btn}</td></tr>`;
+      }).join('');
+
+      document.getElementById('movCard').classList.toggle('hidden', res.movements.length === 0);
+      document.getElementById('movTableBody').innerHTML = res.movements.map(m => `<tr><td data-label="Date">${escapeHtml(m.date)}</td><td data-label="From">${escapeHtml(m.from)}</td><td data-label="To">${escapeHtml(m.to)}</td><td data-label="Notes">${escapeHtml(m.notes)}</td></tr>`).join('');
+    } catch (err) { handleServerError(err, 'searchMsg'); }
+    finally { document.getElementById('searchLoader').classList.add('hidden'); }
+  }
+
+  async function doFilterEquipment() {
+    const loc = document.getElementById('filterLoc').value, desc = document.getElementById('filterDesc').value;
+    document.getElementById('filterLoader').classList.remove('hidden');
+    document.getElementById('filterResultWrap').classList.add('hidden');
+    document.getElementById('filterMsg').innerHTML = '';
+    try {
+      const items = await apiCall('filterEquipment', authToken, loc, desc);
+      if (items.length === 0) { document.getElementById('filterMsg').innerHTML = '<div class="alert alert-info">No equipment found matching filters.</div>'; return; }
+      document.getElementById('filterResultWrap').classList.remove('hidden');
+      document.getElementById('filterCountBadge').textContent = items.length + ' Items Found';
+      document.getElementById('filterTableSearch').value = '';
+      document.getElementById('filterTableBody').innerHTML = items.map((item, idx) => {
+        let certsHtml = '<span style="color:#94a3b8; font-size:0.82rem;">No Certificates</span>';
+        if (item.certificates && item.certificates.length > 0) {
+          certsHtml = item.certificates.map(c => {
+            const cls = c.status === 'expired' ? 'badge-expired' : c.status === 'expiring' ? 'badge-expiring' : 'badge-valid';
+            const dot = c.status === 'expired' ? '🔴' : c.status === 'expiring' ? '🟡' : '🟢';
+            const label = `${dot} ${escapeHtml(c.type)} (${escapeHtml(c.expiryDate || 'N/A')}) 📄`;
+            return c.pdfLink ? `<a href="${escapeHtml(c.pdfLink)}" target="_blank" class="badge ${cls} cert-pill" title="Cert: ${escapeHtml(c.certId)}">${label}</a>` : `<span class="badge ${cls} cert-pill">${label}</span>`;
+          }).join('');
+        }
+        return `<tr class="filter-row" data-text="${escapeHtml((item.serial + ' ' + item.description + ' ' + item.location).toLowerCase())}">
+          <td data-label="#">${idx + 1}</td>
+          <td data-label="Serial"><span class="link-serial" data-serial="${escapeHtml(item.serial)}" onclick="viewSerialDetails(this.dataset.serial)">${escapeHtml(item.serial)}</span></td>
+          <td data-label="Equipment">${escapeHtml(item.description)}</td>
+          <td data-label="Location"><span class="badge badge-loc" style="font-size:0.8rem; padding:3px 9px;">${escapeHtml(item.location)}</span></td>
+          <td data-label="Certificates" class="td-stack"><div>${certsHtml}</div></td></tr>`;
+      }).join('');
+    } catch (err) { handleServerError(err, 'filterMsg'); }
+    finally { document.getElementById('filterLoader').classList.add('hidden'); }
+  }
+
+  function filterResultRows() {
+    const q = document.getElementById('filterTableSearch').value.trim().toLowerCase();
+    document.querySelectorAll('.filter-row').forEach(row => row.classList.toggle('hidden', q && !row.dataset.text.includes(q)));
+  }
+
+  async function loadLocationSerials() {
+    const loc = document.getElementById('adminLocSelect').value;
+    if (!loc) { document.getElementById('siteSerialsWrap').classList.add('hidden'); document.getElementById('siteColFilter').innerHTML = '<option value="">All Columns</option>'; return; }
+    document.getElementById('siteLoader').classList.remove('hidden');
+    document.getElementById('siteSerialsWrap').classList.add('hidden');
+    document.getElementById('siteFilterInput').value = '';
+    try {
+      const res = await apiCall('getAssetsByLocation', authToken, loc);
+      document.getElementById('siteSerialsWrap').classList.remove('hidden');
+      renderSiteList(res.items);
+    } catch (err) { handleServerError(err); }
+    finally { document.getElementById('siteLoader').classList.add('hidden'); }
+  }
+
+  function renderSiteList(list) {
+    const wrap = document.getElementById('serialList');
+    document.getElementById('selectAllBox').checked = false;
+    if (list.length === 0) {
+      document.getElementById('siteColFilter').innerHTML = '<option value="">All Columns</option>';
+      wrap.innerHTML = '<div style="padding:14px;text-align:center;color:#64748b;">This location sheet is empty.</div>';
+      updateSelectedCount(); return;
+    }
+    const groups = {}, groupOrder = [];
+    list.forEach(item => { if (!groups[item.description]) { groups[item.description] = []; groupOrder.push(item.description); } groups[item.description].push(item); });
+    document.getElementById('siteColFilter').innerHTML = '<option value="">All Columns (' + groupOrder.length + ')</option>' +
+      groupOrder.map(desc => `<option value="${escapeHtml(desc)}">${escapeHtml(desc)} (${groups[desc].length})</option>`).join('');
+    wrap.innerHTML = groupOrder.map((desc, gIdx) => {
+      const itemsHtml = groups[desc].map(item => `<label class="serial-item" data-text="${escapeHtml((item.serial + ' ' + item.description).toLowerCase())}">
+        <input type="checkbox" class="sn-check" value="${escapeHtml(item.serial)}" onchange="onSerialCheckChange(${gIdx})"><span>${escapeHtml(item.serial)}</span></label>`).join('');
+      return `<div class="col-group" data-group="${gIdx}" data-desc="${escapeHtml(desc)}">
+        <div class="col-group-header">
+          <label class="col-group-label"><input type="checkbox" class="group-check" data-group="${gIdx}" onchange="toggleGroupSelect(${gIdx}, this.checked)"><span>📦 ${escapeHtml(desc)} (${groups[desc].length})</span></label>
+          <button type="button" class="btn btn-sm btn-outline" onclick="toggleGroupButton(${gIdx})">☑️ Select Column</button>
+        </div><div>${itemsHtml}</div></div>`;
+    }).join('');
+    updateSelectedCount();
+  }
+
+  function filterSiteList() {
+    const colVal = document.getElementById('siteColFilter').value, q = document.getElementById('siteFilterInput').value.trim().toLowerCase();
+    document.querySelectorAll('.col-group').forEach(groupEl => {
+      const colMatch = !colVal || groupEl.dataset.desc === colVal;
+      let visibleCount = 0;
+      groupEl.querySelectorAll('.serial-item').forEach(itemEl => {
+        const showItem = colMatch && (!q || itemEl.dataset.text.includes(q));
+        itemEl.classList.toggle('hidden', !showItem);
+        if (showItem) visibleCount++;
+      });
+      groupEl.classList.toggle('hidden', visibleCount === 0);
+      const visibleChecks = Array.from(groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check'));
+      const gc = groupEl.querySelector('.group-check');
+      if (gc) gc.checked = visibleChecks.length > 0 && visibleChecks.every(cb => cb.checked);
+    });
+  }
+
+  function toggleGroupButton(gIdx) {
+    const groupEl = document.querySelector(`.col-group[data-group="${gIdx}"]`);
+    const visibleChecks = Array.from(groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check'));
+    toggleGroupSelect(gIdx, !(visibleChecks.length > 0 && visibleChecks.every(cb => cb.checked)));
+  }
+
+  function toggleGroupSelect(gIdx, checked) {
+    const groupEl = document.querySelector(`.col-group[data-group="${gIdx}"]`);
+    groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check').forEach(cb => cb.checked = checked);
+    const gc = groupEl.querySelector('.group-check');
+    if (gc) gc.checked = checked;
+    updateSelectedCount();
+  }
+
+  function onSerialCheckChange(gIdx) {
+    const groupEl = document.querySelector(`.col-group[data-group="${gIdx}"]`);
+    const visibleChecks = Array.from(groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check'));
+    const gc = groupEl.querySelector('.group-check');
+    if (gc) gc.checked = visibleChecks.length > 0 && visibleChecks.every(cb => cb.checked);
+    updateSelectedCount();
+  }
+
+  function toggleSelectAll(checked) {
+    document.querySelectorAll('.col-group:not(.hidden)').forEach(groupEl => {
+      groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check').forEach(cb => cb.checked = checked);
+      const visibleChecks = Array.from(groupEl.querySelectorAll('.serial-item:not(.hidden) .sn-check'));
+      const gc = groupEl.querySelector('.group-check');
+      if (gc) gc.checked = checked && visibleChecks.length > 0;
+    });
+    updateSelectedCount();
+  }
+
+  function getSelectedSerials() { return Array.from(document.querySelectorAll('.sn-check:checked')).map(cb => cb.value); }
+  function updateSelectedCount() { document.getElementById('selectedCountBadge').textContent = 'Selected: ' + getSelectedSerials().length; }
+
+  async function submitTransfer() {
+    const fromLocation = document.getElementById('adminLocSelect').value, toLocation = document.getElementById('transferToLoc').value, serials = getSelectedSerials(), msg = document.getElementById('transferMsg');
+    if (serials.length === 0 || !toLocation) { msg.innerHTML = '<div class="alert alert-err">Select items and destination location.</div>'; return; }
+    const btn = document.getElementById('transferBtn'); btn.disabled = true;
+    msg.innerHTML = '<div class="alert alert-info">Transferring items...</div>';
+    try {
+      const res = await apiCall('transferAssets', authToken, { fromLocation, toLocation, serials, notes: document.getElementById('transferNotes').value.trim() });
+      msg.innerHTML = `<div class="alert alert-ok">✅ Transferred ${res.count} item(s) to ${escapeHtml(toLocation)}</div>`;
+      loadLocationSerials(); scanDuplicates();
+    } catch (err) { handleServerError(err, 'transferMsg'); }
+    finally { btn.disabled = false; }
+  }
+
+  function toggleAddAsset() { document.getElementById('addAssetBox').classList.toggle('hidden'); }
+
+  async function submitNewAssets() {
+    const location = document.getElementById('adminLocSelect').value, msg = document.getElementById('addAssetMsg');
+    if (!location) { msg.innerHTML = '<div class="alert alert-err">Select a location first.</div>'; return; }
+    const selDesc = document.getElementById('newDescSelect').value;
+    const description = selDesc === '__NEW__' ? document.getElementById('newDescCustom').value.trim() : selDesc;
+    if (!description) { msg.innerHTML = '<div class="alert alert-err">Choose or enter Equipment Description.</div>'; return; }
+    try {
+      const res = await apiCall('addAssetsBatch', authToken, { location, description, serialsText: document.getElementById('newSerials').value });
+      let html = `<div class="alert alert-ok">✅ Added ${res.count} serial(s) to ${escapeHtml(location)}</div>`;
+      if (res.skipped && res.skipped.length > 0) html += `<div class="alert alert-warn">⚠️ Skipped duplicates: ${res.skipped.map(escapeHtml).join(', ')}</div>`;
+      msg.innerHTML = html;
+      document.getElementById('newSerials').value = '';
+      if (!allDescriptions.some(d => d.toUpperCase() === description.toUpperCase())) { allDescriptions.push(description); allDescriptions.sort(); populateAllDescriptionDropdowns(); }
+      document.getElementById('newDescCustom').value = ''; document.getElementById('newDescCustom').classList.add('hidden');
+      document.getElementById('newDescSelect').value = description;
+      loadLocationSerials(); scanDuplicates();
+    } catch (err) { handleServerError(err, 'addAssetMsg'); }
+  }
+</script>
+</body>
+</html>
